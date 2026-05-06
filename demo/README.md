@@ -30,6 +30,8 @@ The expected loop:
 [Download MP4](rect-align-challenge.mp4) — 20s, 2.3 MB, sped up 12.98×
 from the original screen recording.
 
+**Agent:** Claude Code Opus 4.7 (1M context).
+
 ## Result
 
 The model converged on these CSS deltas in `test-app/src/style.css`:

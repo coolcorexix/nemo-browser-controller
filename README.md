@@ -150,9 +150,31 @@ End-to-end runs that exercise the full pipe (LLM → MCP → service worker →
 page → screenshot back) against the bundled `test-app/`. Each one is
 reproducible — boot `test-app/` with `npm run dev` and let the model drive.
 
-| Eval         | What it tests                                          | Demo                                |
-| ------------ | ------------------------------------------------------ | ----------------------------------- |
-| Rect-align   | DOM bbox read → CSS edit → visual verification         | [demo/](demo/README.md)             |
+<table>
+  <thead>
+    <tr>
+      <th width="50%">Challenge</th>
+      <th width="50%">Demo</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td valign="top">
+        <strong><a href="demo/README.md">Rect-align</a></strong><br>
+        A misaligned <code>position: absolute</code> red rectangle has to be
+        moved to exactly cover a blue rectangle in a CSS grid. The model has
+        to read the rendered bbox (not the source CSS — grid cells are
+        <code>1fr</code> so width depends on viewport), edit
+        <code>style.css</code>, then re-screenshot to verify.
+        <br><br>
+        <sub>Agent: <strong>Claude Code Opus 4.7</strong></sub>
+      </td>
+      <td valign="top">
+        <video src="demo/rect-align-challenge.mp4" controls width="100%"></video>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ## Limits / known caveats
 
