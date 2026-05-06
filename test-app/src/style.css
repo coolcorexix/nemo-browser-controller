@@ -1,0 +1,92 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  padding: 40px 24px;
+}
+
+.page {
+  max-width: 880px;
+  margin: 0 auto;
+  /* Required so the absolute red rectangle is positioned relative to .page,
+     not the viewport — keeps the layout deterministic at any window size. */
+  position: relative;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 8px;
+}
+
+.hint {
+  font-size: 14px;
+  color: #555;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.t-red    { color: #dc2626; font-weight: 600; }
+.t-blue   { color: #2563eb; font-weight: 600; }
+code {
+  background: #ececef;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+/* Layout container — blue rect lives inside this grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 140px);
+  gap: 16px;
+  padding: 20px;
+  border: 1px dashed #c0c0c4;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.cell {
+  background: #fafafa;
+  border: 1px solid #e5e5ea;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #999;
+}
+
+.blue-rect {
+  background: #2563eb;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* The red rectangle — absolutely positioned within .page.
+   These values are intentionally WRONG. The AI must observe the rendered
+   position of .blue-rect (which depends on the grid) and update top/left/
+   width/height here so the red rectangle exactly overlays the blue one. */
+.red-rect {
+  position: absolute;
+  top: 276px;
+  left: 286px;
+  width: 250px;
+  height: 140px;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  opacity: 0.85;
+  pointer-events: none;
+}

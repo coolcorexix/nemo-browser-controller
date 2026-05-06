@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nemo Controller</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Nemo Controller</h1>
+      <div class="header-pills">
+        <span id="bridge-pill" class="pill" title="MCP WebSocket bridge">bridge?</span>
+        <span id="status-pill" class="pill">idle</span>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>Navigate</h2>
+      <div class="row">
+        <input id="url-input" type="text" placeholder="https://example.com" />
+        <button id="btn-navigate">Go</button>
+      </div>
+      <div class="row tight">
+        <button id="btn-list-tabs" class="ghost">List tabs</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Snapshot</h2>
+      <div class="row">
+        <button id="btn-snapshot-dom">DOM tree</button>
+        <button id="btn-screenshot">Screenshot</button>
+        <button id="btn-screenshot-full">Full-page</button>
+      </div>
+      <div id="snapshot-meta" class="muted small"></div>
+      <pre id="snapshot-tree"></pre>
+      <div id="screenshot-container"></div>
+    </section>
+
+    <section class="card">
+      <h2>Inspect (any element)</h2>
+      <div class="row">
+        <input id="query-selector" type="text" placeholder="CSS selector or text:hello" />
+        <button id="btn-query">Query</button>
+      </div>
+      <pre id="query-output"></pre>
+      <div class="row tight">
+        <input id="inspect-ref" type="text" placeholder="ref" class="narrow" />
+        <button id="btn-inspect">Inspect</button>
+        <button id="btn-screenshot-element">Screenshot ref</button>
+        <input id="screenshot-padding" type="text" placeholder="pad" class="narrow" value="16" />
+      </div>
+      <pre id="inspect-output"></pre>
+      <div id="element-screenshot"></div>
+    </section>
+
+    <section class="card">
+      <h2>Actions</h2>
+      <div class="row">
+        <input id="action-ref" type="text" placeholder="ref" class="narrow" />
+        <input id="action-text" type="text" placeholder="text (for type / select)" />
+      </div>
+      <div class="row tight">
+        <button data-action="click">Click</button>
+        <button data-action="type">Type</button>
+        <button data-action="press_enter">Enter</button>
+        <button data-action="focus">Focus</button>
+        <button data-action="hover">Hover</button>
+        <button data-action="select">Select</button>
+        <button data-action="submit">Submit</button>
+      </div>
+      <div class="row tight">
+        <button data-scroll="up" class="ghost">↑ Scroll up</button>
+        <button data-scroll="down" class="ghost">↓ Scroll down</button>
+        <button data-scroll="top" class="ghost">⇈ Top</button>
+        <button data-scroll="bottom" class="ghost">⇊ Bottom</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>DevTools</h2>
+      <div class="row tight">
+        <button id="btn-attach">Attach debugger</button>
+        <button id="btn-detach" class="ghost">Detach</button>
+        <button id="btn-clear" class="ghost">Clear logs</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="console">Console</button>
+        <button class="tab" data-tab="network">Network</button>
+      </div>
+      <div id="tab-console" class="tab-pane active">
+        <button id="btn-refresh-console" class="ghost small">Refresh</button>
+        <pre id="console-output"></pre>
+      </div>
+      <div id="tab-network" class="tab-pane">
+        <button id="btn-refresh-network" class="ghost small">Refresh</button>
+        <table id="network-table">
+          <thead>
+            <tr><th>Status</th><th>Method</th><th>Type</th><th>URL</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Activity</h2>
+      <pre id="activity-log"></pre>
+    </section>
+
+    <script type="module" src="sidepanel.js"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rectangle Alignment Test</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <h1>Rectangle Alignment Test</h1>
+        <p class="hint">
+          Goal: place the <span class="t-red">red</span> rectangle exactly on top of the
+          <span class="t-blue">blue</span> rectangle. The blue one is laid out by the grid;
+          the red one is <code>position: absolute</code> and currently misaligned.
+        </p>
+      </header>
+
+      <section class="grid">
+        <div class="cell">1</div>
+        <div class="cell">2</div>
+        <div class="cell">3</div>
+        <div class="cell">4</div>
+        <div class="cell blue-rect" data-target="blue">5</div>
+        <div class="cell">6</div>
+      </section>
+
+      <div class="red-rect" data-target="red">RED</div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.log
+dist/
+.vite/
+
+# user-local: hardcoded absolute path, gets generated per-machine
+.mcp.json
