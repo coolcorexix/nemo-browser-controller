@@ -170,7 +170,8 @@ reproducible — boot `test-app/` with `npm run dev` and let the model drive.
         <sub>Agent: <strong>Claude Code Opus 4.7</strong></sub>
       </td>
       <td valign="top">
-        <video src="demo/rect-align-challenge.mp4" controls width="100%"></video>
+        <img src="demo/preview.gif" alt="Rect-align challenge demo" width="100%">
+        <br><sub><a href="demo/rect-align-challenge.mp4">Download MP4</a> (2.3 MB, 20s)</sub>
       </td>
     </tr>
   </tbody>

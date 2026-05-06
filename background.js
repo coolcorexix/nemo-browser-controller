@@ -18,6 +18,7 @@ import {
   clearLogs,
   isAttached,
 } from "./lib/cdp-client.js";
+import { markTabAsControlled, forgetTab } from "./lib/control-indicator.js";
 // MV3 service workers are evicted after ~30s idle, which would kill the
 // WebSocket to the MCP server. We host the bridge in an offscreen document
 // instead — those persist for the extension's lifetime regardless of SW
@@ -61,10 +62,14 @@ chrome.sidePanel
 // --- Helpers ---------------------------------------------------------------
 
 async function getActiveTabId(explicit) {
-  if (explicit) return explicit;
-  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  if (!tab?.id) throw new Error("No active tab found");
-  return tab.id;
+  let id = explicit;
+  if (!id) {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!tab?.id) throw new Error("No active tab found");
+    id = tab.id;
+  }
+  markTabAsControlled(id); // fire-and-forget; never blocks commands
+  return id;
 }
 
 async function navigate(tabId, url) {
@@ -165,6 +170,8 @@ const commands = {
   async navigate({ url, tabId }) {
     const id = await getActiveTabId(tabId);
     await navigate(id, url);
+    // Re-apply viewport overlay — navigation creates a fresh document.
+    markTabAsControlled(id);
     return { ok: true, tabId: id };
   },
 
@@ -289,9 +296,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true; // keep channel open for async sendResponse
 });
 
-// Clean up debugger on tab close.
+// Clean up debugger and indicator state on tab close.
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (isAttached(tabId)) detachDebugger(tabId).catch(() => {});
+  forgetTab(tabId);
 });
 
 // The WebSocket bridge lives in the offscreen document (see top of file).
