@@ -5,11 +5,13 @@
   "description": "A browser controller extension. Lets an operator (or an LLM) navigate, read DOM, take screenshots, and inspect console + network like DevTools.",
   "permissions": [
     "tabs",
+    "tabGroups",
     "activeTab",
     "scripting",
     "debugger",
     "sidePanel",
-    "storage"
+    "storage",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"

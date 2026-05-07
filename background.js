@@ -18,7 +18,41 @@ import {
   clearLogs,
   isAttached,
 } from "./lib/cdp-client.js";
-import { installWebSocketBridge } from "./lib/ws-client.js";
+import { markTabAsControlled, forgetTab } from "./lib/control-indicator.js";
+// MV3 service workers are evicted after ~30s idle, which would kill the
+// WebSocket to the MCP server. We host the bridge in an offscreen document
+// instead — those persist for the extension's lifetime regardless of SW
+// eviction or whether the side panel is open. The offscreen doc proxies
+// inbound MCP commands here via chrome.runtime.sendMessage, where the real
+// chrome.* APIs and `commands` table live.
+const OFFSCREEN_URL = "offscreen.html";
+async function ensureOffscreenDocument() {
+  // hasDocument() is the MV3-correct existence check; createDocument throws
+  // if one already exists.
+  const exists = await chrome.offscreen.hasDocument?.();
+  if (exists) return;
+  try {
+    await chrome.offscreen.createDocument({
+      url: OFFSCREEN_URL,
+      reasons: ["WORKERS"],
+      justification:
+        "Persistent WebSocket bridge to the local MCP server (MV3 service workers can't be relied on to keep a long-lived connection alive).",
+    });
+  } catch (err) {
+    // Race: another event handler created it first; that's fine.
+    if (!String(err?.message || err).includes("Only a single offscreen document")) {
+      console.warn("[Nemo] offscreen.createDocument failed:", err);
+    }
+  }
+}
+
+// Spin up the offscreen doc as soon as the extension wakes up. Both
+// onInstalled (first-load / update) and onStartup (browser launch) cover
+// the cases where the SW comes to life cold.
+chrome.runtime.onInstalled.addListener(ensureOffscreenDocument);
+chrome.runtime.onStartup.addListener(ensureOffscreenDocument);
+// Also call eagerly so reload-during-dev works without waiting for an event.
+ensureOffscreenDocument();
 
 // Open the side panel when the toolbar icon is clicked.
 chrome.sidePanel
@@ -28,10 +62,14 @@ chrome.sidePanel
 // --- Helpers ---------------------------------------------------------------
 
 async function getActiveTabId(explicit) {
-  if (explicit) return explicit;
-  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
-  if (!tab?.id) throw new Error("No active tab found");
-  return tab.id;
+  let id = explicit;
+  if (!id) {
+    const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (!tab?.id) throw new Error("No active tab found");
+    id = tab.id;
+  }
+  markTabAsControlled(id); // fire-and-forget; never blocks commands
+  return id;
 }
 
 async function navigate(tabId, url) {
@@ -132,6 +170,8 @@ const commands = {
   async navigate({ url, tabId }) {
     const id = await getActiveTabId(tabId);
     await navigate(id, url);
+    // Re-apply viewport overlay — navigation creates a fresh document.
+    markTabAsControlled(id);
     return { ok: true, tabId: id };
   },
 
@@ -238,8 +278,13 @@ const commands = {
   },
 };
 
-// Message bridge: side panel → background.
+// Message bridge: side panel → background, and offscreen-relayed MCP
+// commands → background. Messages targeted at the offscreen doc are skipped
+// so we don't double-handle bridge_status_request etc.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.target && message.target !== "background") {
+    return false; // not for us — offscreen handles its own messages
+  }
   const handler = commands[message?.type];
   if (!handler) {
     sendResponse({ ok: false, error: `Unknown command: ${message?.type}` });
@@ -251,17 +296,27 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   return true; // keep channel open for async sendResponse
 });
 
-// Clean up debugger on tab close.
+// Clean up debugger and indicator state on tab close.
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (isAttached(tabId)) detachDebugger(tabId).catch(() => {});
+  forgetTab(tabId);
 });
 
-// Connect outbound to the local MCP server. Reconnects automatically.
-const wsBridge = installWebSocketBridge(commands);
-
-// Surface bridge status so the side panel can render a "connected" indicator.
-commands.bridge_status = async () => ({ ok: true, ...wsBridge.getStatus() });
+// The WebSocket bridge lives in the offscreen document (see top of file).
+// These commands forward status/reconnect requests to the offscreen via
+// chrome.runtime.sendMessage with target:"offscreen", which the offscreen's
+// own listener handles.
+commands.bridge_status = async () => {
+  await ensureOffscreenDocument();
+  return chrome.runtime.sendMessage({
+    type: "bridge_status_request",
+    target: "offscreen",
+  });
+};
 commands.bridge_reconnect = async () => {
-  wsBridge.reconnect();
-  return { ok: true };
+  await ensureOffscreenDocument();
+  return chrome.runtime.sendMessage({
+    type: "bridge_reconnect_request",
+    target: "offscreen",
+  });
 };

@@ -144,6 +144,27 @@ If MCP isn't your goal, the same `commands` table also accepts plain
 this) — so you can drive it from any extension-internal UI without the MCP
 server.
 
+## Usage TUI
+
+Every MCP tool call gets appended to an NDJSON log
+(`~/.nemo-browser/usage.ndjson`) with timestamp, tool name, latency, and
+estimated token cost (text: chars/4, images: Anthropic's `(w·h)/750 + 75`
+formula). A separate TUI tails that log so you can watch token spend in real
+time next to the agent.
+
+```bash
+cd tui && npm install
+node tui/index.js   # or: npm start
+```
+
+The TUI shows session totals, a tokens-per-minute line chart for the last 30
+minutes, the latest 15 transactions, and per-tool aggregates (`Calls`, `In`,
+`Out`, `Total`). Press `q` to quit.
+
+Override the log path with `NEMO_USAGE_LOG=/some/path npm start` if you want
+to keep multiple sessions separate or inspect the raw stream
+(`tail -f ~/.nemo-browser/usage.ndjson | jq`).
+
 ## Evaluations
 
 End-to-end runs that exercise the full pipe (LLM → MCP → service worker →
@@ -170,7 +191,8 @@ reproducible — boot `test-app/` with `npm run dev` and let the model drive.
         <sub>Agent: <strong>Claude Code Opus 4.7</strong></sub>
       </td>
       <td valign="top">
-        <video src="demo/rect-align-challenge.mp4" controls width="100%"></video>
+        <img src="demo/preview.gif" alt="Rect-align challenge demo" width="100%">
+        <br><sub><a href="demo/rect-align-challenge.mp4">Download MP4</a> (2.3 MB, 20s)</sub>
       </td>
     </tr>
   </tbody>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Nemo MCP bridge (offscreen)</title>
+  </head>
+  <body>
+    <!--
+      Invisible offscreen document whose only job is to keep the WebSocket
+      bridge to the local MCP server alive. Offscreen documents persist for
+      the extension's lifetime, so the bridge survives MV3 service-worker
+      eviction.
+
+      All chrome.* APIs (tabs, debugger, scripting) are NOT available here —
+      the bridge forwards inbound WS commands to the service worker via
+      chrome.runtime.sendMessage and relays the response back over WS.
+    -->
+    <script type="module" src="offscreen.js"></script>
+  </body>
+</html>
