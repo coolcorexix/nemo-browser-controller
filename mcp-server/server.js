@@ -14,6 +14,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { WebSocketServer } from "ws";
 import { randomUUID } from "node:crypto";
+import { logTransaction, estimateTokens, USAGE_LOG_PATH } from "./lib/usage-log.js";
 
 const PORT = Number(process.env.NEMO_WS_PORT || 9223);
 const TIMEOUT_MS = Number(process.env.NEMO_TIMEOUT_MS || 30000);
@@ -267,22 +268,41 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
+  const startedAt = Date.now();
+  const args = req.params.arguments ?? {};
   const tool = TOOLS.find((t) => t.name === req.params.name);
+
+  // Wrap response building so we can log every code path uniformly.
+  const finish = (response, extra = {}) => {
+    const tokensIn = estimateTokens([{ type: "text", text: JSON.stringify(args) }]);
+    const tokensOut = estimateTokens(response.content || []);
+    logTransaction({
+      tool: req.params.name,
+      ok: !response.isError,
+      duration_ms: Date.now() - startedAt,
+      tokens_in: tokensIn,
+      tokens_out: tokensOut,
+      tokens_total: tokensIn + tokensOut,
+      ...extra,
+    });
+    return response;
+  };
+
   if (!tool) {
-    return {
+    return finish({
       isError: true,
       content: [{ type: "text", text: `Unknown tool: ${req.params.name}` }],
-    };
+    });
   }
 
   let result;
   try {
-    result = await callExtension(tool.cmd, req.params.arguments ?? {});
+    result = await callExtension(tool.cmd, args);
   } catch (err) {
-    return {
+    return finish({
       isError: true,
       content: [{ type: "text", text: String(err?.message ?? err) }],
-    };
+    });
   }
 
   // Return screenshots as image content blocks so the model can see them.
@@ -298,19 +318,19 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       const meta = `<${result.tag}> at (${Math.round(result.bbox.x)}, ${Math.round(result.bbox.y)}) size ${Math.round(result.bbox.w)}×${Math.round(result.bbox.h)}`;
       blocks.push({ type: "text", text: meta });
     }
-    return { content: blocks };
+    return finish({ content: blocks });
   }
 
   if (!result.ok) {
-    return {
+    return finish({
       isError: true,
       content: [{ type: "text", text: result.error || "Unknown error" }],
-    };
+    });
   }
 
-  return {
+  return finish({
     content: [{ type: "text", text: formatResult(tool.cmd, result) }],
-  };
+  });
 });
 
 function formatResult(cmd, result) {
@@ -393,6 +413,7 @@ function formatResult(cmd, result) {
 const transport = new StdioServerTransport();
 await server.connect(transport);
 log(`MCP server ready (stdio) — extension should connect to ws://127.0.0.1:${PORT}`);
+log(`usage log: ${USAGE_LOG_PATH}`);
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));

@@ -6,3 +6,6 @@ dist/
 
 # user-local: hardcoded absolute path, gets generated per-machine
 .mcp.json
+
+# local Claude Code settings
+.claude/
